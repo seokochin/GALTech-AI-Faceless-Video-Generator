@@ -1,0 +1,5 @@
+{
+  "name": "AI Video Weaver",
+  "description": "A powerful application to generate video storyboards from a topic, utilizing AI for scriptwriting, image generation, and voice-overs.",
+  "requestFramePermissions": []
+}

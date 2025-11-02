@@ -1,7 +1,7 @@
 # GALTech AI Faceless Video Generator
 
 <div align="center">
-<img width="1200" height="475" alt="galtech school" src="https://www.galtechlearning.com/" />
+<img width="1200" height="475" alt="galtech school" src="https://www.galtechlearning.com/_next/image?url=%2Flogo.webp" />
 </div>
 
 This project is an AI-powered video generator that creates "faceless" videos based on a given topic. It automatically generates a storyboard, scripts, images, and voice-overs, and then combines them into a final video.

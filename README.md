@@ -1,10 +1,14 @@
 # GALTech AI Faceless Video Generator
 
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+<img width="1200" height="475" alt="galtech school" src="https://www.galtechlearning.com/" />
 </div>
 
 This project is an AI-powered video generator that creates "faceless" videos based on a given topic. It automatically generates a storyboard, scripts, images, and voice-overs, and then combines them into a final video.
+
+## About GALTech
+
+This project is an initiative of [GALTech Learning](https://www.galtechlearning.com/), an educational venture by GALTech Technologies Pvt Ltd. GALTech is a leading IT training institute in Kerala, India, specializing in AI-powered education and next-generation technology courses. They are recognized by Startup India and the Kerala Startup Mission.
 
 ## Features
 

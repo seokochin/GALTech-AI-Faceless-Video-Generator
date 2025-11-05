@@ -17,6 +17,7 @@ This project is an initiative of [GALTech Learning](https://www.galtechlearning.
 -   **AI-Generated Content**: Uses AI to generate scripts, images, and voice-overs.
 -   **Customizable Output**: Supports different aspect ratios and image styles.
 -   **Web-Based Interface**: Easy-to-use interface for generating and previewing videos.
+-   **MCP Server Integration**: Model Context Protocol server for integration with Claude Desktop, n8n, and other MCP-compatible applications.
 
 ## Tech Stack
 
@@ -31,6 +32,7 @@ This project is an initiative of [GALTech Learning](https://www.galtechlearning.
 
 -   Python
 -   Flask
+-   MCP (Model Context Protocol)
 
 ## Getting Started
 
@@ -84,6 +86,83 @@ You need to start both the frontend development server and the backend Flask ser
     ```
 
 The application should now be running on your local machine.
+
+## MCP Server Integration
+
+This project includes an MCP (Model Context Protocol) server that allows you to integrate video generation capabilities with Claude Desktop, n8n, and other MCP-compatible applications.
+
+### Quick Start with MCP
+
+1.  **Install MCP dependencies:**
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Run the MCP server:**
+
+    ```bash
+    ./run_mcp_server.sh
+    ```
+
+    Or manually:
+
+    ```bash
+    python3 mcp_server.py
+    ```
+
+3.  **Configure Claude Desktop:**
+
+    Add this configuration to your Claude Desktop config file (replace paths with your actual paths):
+
+    ```json
+    {
+      "mcpServers": {
+        "galtech-video-generator": {
+          "command": "python3",
+          "args": [
+            "/path/to/GALTech-AI-Faceless-Video-Generator/mcp_server.py"
+          ],
+          "env": {
+            "PYTHONPATH": "/path/to/GALTech-AI-Faceless-Video-Generator"
+          }
+        }
+      }
+    }
+    ```
+
+4.  **Start using it in Claude Desktop:**
+
+    Once configured, you can ask Claude to generate videos naturally:
+
+    ```
+    Generate a video with these scenes:
+    - Scene 1: Image at /path/to/image1.jpg, audio at /path/to/audio1.wav, caption "Welcome"
+    - Scene 2: Image at /path/to/image2.jpg, audio at /path/to/audio2.wav, caption "Thank you"
+
+    Use 16:9 aspect ratio and save as "my_video.mp4"
+    ```
+
+### MCP Server Features
+
+The MCP server exposes these tools:
+
+-   **generate_video** - Generate videos from local file paths
+-   **generate_video_from_base64** - Generate videos from base64-encoded media
+-   **get_video_info** - Get information about generated videos
+-   **list_generated_videos** - List all generated videos
+-   **cleanup_old_files** - Clean up old temporary and video files
+
+### Detailed MCP Documentation
+
+For complete MCP server documentation, including:
+-   Claude Desktop setup instructions
+-   n8n integration guide
+-   API reference
+-   Troubleshooting tips
+-   Usage examples
+
+See **[MCP_SERVER.md](MCP_SERVER.md)**
 
 ## Contributing
 

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "galtech-video-generator": {
+      "command": "python",
+      "args": [
+        "/absolute/path/to/GALTech-AI-Faceless-Video-Generator/mcp_server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/absolute/path/to/GALTech-AI-Faceless-Video-Generator"
+      }
+    }
+  }
+}

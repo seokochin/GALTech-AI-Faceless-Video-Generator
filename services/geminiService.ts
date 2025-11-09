@@ -97,7 +97,7 @@ export const editImage = async (base64Image: string, mimeType: string, prompt: s
   throw new Error("Image editing failed to produce an image.");
 };
 
-export const generateSpeech = async (text: string): Promise<string> => {
+export const generateSpeech = async (text: string, voiceName: string = 'Kore'): Promise<string> => {
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: `Say with a clear and engaging tone: ${text}` }] }],
@@ -105,7 +105,7 @@ export const generateSpeech = async (text: string): Promise<string> => {
       responseModalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Kore' },
+          prebuiltVoiceConfig: { voiceName },
         },
       },
     },

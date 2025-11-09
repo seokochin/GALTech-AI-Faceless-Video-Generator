@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Scene, GroundingChunk } from './types';
+import { Scene, GroundingChunk, VoiceName } from './types';
 import { generateStoryboard } from './services/geminiService';
 import TopicInput from './components/TopicInput';
 import Storyboard from './components/Storyboard';
@@ -11,12 +11,14 @@ const App: React.FC = () => {
   const [view, setView] = useState<View>('TOPIC_INPUT');
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [groundingSources, setGroundingSources] = useState<GroundingChunk[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<VoiceName>('Kore');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleGenerate = useCallback(async (topic: string, duration: number) => {
+  const handleGenerate = useCallback(async (topic: string, duration: number, voice: VoiceName) => {
     setIsLoading(true);
     setError(null);
+    setSelectedVoice(voice);
     try {
       const { scenes: newScenes, groundingChunks } = await generateStoryboard(topic, duration);
       setScenes(newScenes);
@@ -38,6 +40,14 @@ const App: React.FC = () => {
     );
   }, []);
 
+  const handleDeleteScene = useCallback((sceneId: number) => {
+    setScenes(prevScenes => {
+      const filtered = prevScenes.filter(scene => scene.id !== sceneId);
+      // Re-number the scenes to maintain sequential IDs
+      return filtered.map((scene, index) => ({ ...scene, id: index + 1 }));
+    });
+  }, []);
+
   const handleReset = () => {
     setView('TOPIC_INPUT');
     setScenes([]);
@@ -56,8 +66,10 @@ const App: React.FC = () => {
           <Storyboard
             scenes={scenes}
             updateScene={handleUpdateScene}
+            deleteScene={handleDeleteScene}
             onReset={handleReset}
             groundingSources={groundingSources}
+            selectedVoice={selectedVoice}
           />
         );
       case 'TOPIC_INPUT':

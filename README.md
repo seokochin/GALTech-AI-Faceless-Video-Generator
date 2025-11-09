@@ -15,6 +15,7 @@ This project is an initiative of [GALTech Learning](https://www.galtechlearning.
 -   **AI-Generated Content**: Uses AI to generate scripts, images, and voice-overs.
 -   **Customizable Output**: Supports different aspect ratios and image styles.
 -   **Web-Based Interface**: Easy-to-use interface for generating and previewing videos.
+-   **MCP Server Integration**: Connect via Model Context Protocol to generate videos from Claude Desktop or other MCP clients.
 
 ## Tech Stack
 
@@ -82,6 +83,64 @@ You need to start both the frontend development server and the backend Flask ser
     ```
 
 The application should now be running on your local machine.
+
+## MCP Server (Model Context Protocol)
+
+This project includes an MCP server that allows you to generate videos directly from Claude Desktop or other MCP-compatible clients.
+
+### Quick Setup
+
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Configure Claude Desktop by adding this to your `claude_desktop_config.json`:
+   ```json
+   {
+     "mcpServers": {
+       "ai-video-weaver": {
+         "command": "python3",
+         "args": ["/absolute/path/to/ai-video-weaver/mcp_server.py"],
+         "env": {
+           "GEMINI_API_KEY": "your_gemini_api_key_here"
+         }
+       }
+     }
+   }
+   ```
+
+3. Restart Claude Desktop
+
+4. Ask Claude to generate videos:
+   > "Generate a 2-minute video about the solar system in cinematic style"
+
+### Parameters You Can Set
+
+When asking Claude to generate videos, you can specify:
+- **Duration**: "2 minutes", "30 seconds" (0.5-10 minutes)
+- **Aspect Ratio**: "vertical" (9:16), "horizontal" (16:9), "square" (1:1)
+- **Style**: "cinematic", "photorealistic", "cartoon", "anime", etc.
+- **Topic**: Any subject for your video
+
+**Examples:**
+```
+"Create a 1-minute vertical video about fitness in cartoon style"
+"Generate a 2-minute square video about cooking in photorealistic style"
+"Make a 30-second TikTok video about travel tips"
+```
+
+### Available MCP Tools
+
+- `generate_video` - Generate complete video from a topic
+- `list_videos` - List all generated videos
+- `get_video_info` - Get detailed info about a video file
+
+### Documentation
+
+- **[MCP_SERVER.md](MCP_SERVER.md)** - Complete MCP server setup and configuration
+- **[MCP_USAGE_EXAMPLES.md](MCP_USAGE_EXAMPLES.md)** - Detailed usage examples with all parameters
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick reference cheat sheet
 
 ## Contributing
 

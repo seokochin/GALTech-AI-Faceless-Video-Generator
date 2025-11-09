@@ -29,6 +29,27 @@ class VideoGenerator:
         if not self._check_ffmpeg():
             raise RuntimeError("FFmpeg is not installed. Please install it first.")
 
+    def _check_disk_space(self, required_gb: float = 2.0) -> bool:
+        """
+        Check if there's enough disk space available
+
+        Args:
+            required_gb: Minimum required space in GB
+
+        Returns:
+            True if enough space available
+        """
+        import shutil
+        stat = shutil.disk_usage(str(self.output_dir))
+        available_gb = stat.free / (1024**3)
+
+        print(f"💾 Disk space: {available_gb:.2f} GB free")
+
+        if available_gb < required_gb:
+            print(f"⚠️  WARNING: Low disk space! Need at least {required_gb} GB, have {available_gb:.2f} GB")
+            return False
+        return True
+
     def _check_ffmpeg(self) -> bool:
         """Check if FFmpeg is installed"""
         try:
@@ -105,7 +126,8 @@ class VideoGenerator:
                       aspect_ratio: str = "16:9",
                       transition_duration: float = 0.5,
                       fps: int = 30,
-                      resolution: str = "1920x1080") -> str:
+                      resolution: str = "1920x1080",
+                      enable_captions: bool = True) -> str:
         """
         Generate video from scenes with transitions and text overlays
 
@@ -120,6 +142,7 @@ class VideoGenerator:
             transition_duration: Duration of transition effect in seconds
             fps: Frames per second
             resolution: Video resolution (e.g., "1920x1080")
+            enable_captions: Whether to display captions on video (default: True)
 
         Returns:
             Path to generated video file
@@ -129,6 +152,13 @@ class VideoGenerator:
         try:
             print(f"🎬 Starting video generation with {len(scenes)} scenes...")
 
+            # Check disk space before starting
+            if not self._check_disk_space(required_gb=3.0):
+                raise RuntimeError(
+                    "Insufficient disk space! Please free up at least 3 GB of space.\n"
+                    "Run: rm -rf temp_uploads/* generated_videos/*.mp4"
+                )
+
             # Calculate dimensions based on aspect ratio
             width, height = self._get_dimensions(aspect_ratio, resolution)
 
@@ -137,7 +167,7 @@ class VideoGenerator:
             for i, scene in enumerate(scenes):
                 print(f"📹 Processing scene {i+1}/{len(scenes)}...")
                 scene_video = self._create_scene_video(
-                    scene, i, width, height, fps, transition_duration, effect_type='auto'
+                    scene, i, width, height, fps, transition_duration, effect_type='auto', enable_captions=enable_captions
                 )
                 scene_videos.append(scene_video)
 
@@ -173,6 +203,106 @@ class VideoGenerator:
             return int(w), int(h)
         except:
             return 1920, 1080
+
+    def _detect_script(self, text: str) -> str:
+        """
+        Detect the script/language of the text
+        Returns: 'malayalam', 'hindi', 'arabic', 'chinese', 'japanese', 'korean', or 'latin'
+        """
+        # Malayalam Unicode range: U+0D00 to U+0D7F
+        if any('\u0D00' <= char <= '\u0D7F' for char in text):
+            return 'malayalam'
+        # Hindi/Devanagari Unicode range: U+0900 to U+097F
+        elif any('\u0900' <= char <= '\u097F' for char in text):
+            return 'hindi'
+        # Arabic Unicode range: U+0600 to U+06FF
+        elif any('\u0600' <= char <= '\u06FF' for char in text):
+            return 'arabic'
+        # Chinese Unicode ranges
+        elif any('\u4E00' <= char <= '\u9FFF' or '\u3400' <= char <= '\u4DBF' for char in text):
+            return 'chinese'
+        # Japanese (Hiragana, Katakana)
+        elif any('\u3040' <= char <= '\u309F' or '\u30A0' <= char <= '\u30FF' for char in text):
+            return 'japanese'
+        # Korean (Hangul)
+        elif any('\uAC00' <= char <= '\uD7AF' for char in text):
+            return 'korean'
+        # Default to Latin
+        return 'latin'
+
+    def _get_font_path(self, script: str) -> str:
+        """
+        Get the appropriate font path for the detected script
+        Returns the full path to a font file that supports the script
+        """
+        import platform
+        system = platform.system()
+
+        # Font paths based on script and OS
+        font_map = {
+            'malayalam': {
+                'Darwin': '/System/Library/Fonts/Supplemental/Malayalam Sangam MN.ttc',  # macOS
+                'Linux': '/usr/share/fonts/truetype/noto/NotoSansMalayalam-Regular.ttf',
+                'Windows': 'C:\\Windows\\Fonts\\NirmalaB.ttf'  # Nirmala UI Bold
+            },
+            'hindi': {
+                'Darwin': '/System/Library/Fonts/Supplemental/Devanagari Sangam MN.ttc',
+                'Linux': '/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf',
+                'Windows': 'C:\\Windows\\Fonts\\NirmalaB.ttf'
+            },
+            'arabic': {
+                'Darwin': '/System/Library/Fonts/Supplemental/Baghdad.ttf',
+                'Linux': '/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf',
+                'Windows': 'C:\\Windows\\Fonts\\tahoma.ttf'
+            },
+            'chinese': {
+                'Darwin': '/System/Library/Fonts/PingFang.ttc',
+                'Linux': '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+                'Windows': 'C:\\Windows\\Fonts\\msyh.ttc'
+            },
+            'japanese': {
+                'Darwin': '/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc',
+                'Linux': '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+                'Windows': 'C:\\Windows\\Fonts\\msmincho.ttc'
+            },
+            'korean': {
+                'Darwin': '/System/Library/Fonts/AppleSDGothicNeo.ttc',
+                'Linux': '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+                'Windows': 'C:\\Windows\\Fonts\\malgun.ttf'
+            },
+            'latin': {
+                'Darwin': '/System/Library/Fonts/Helvetica.ttc',
+                'Linux': '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+                'Windows': 'C:\\Windows\\Fonts\\Arial.ttf'
+            }
+        }
+
+        font_path = font_map.get(script, font_map['latin']).get(system, font_map['latin']['Darwin'])
+
+        # Check if font exists, fallback to Noto Sans if not
+        if not os.path.exists(font_path):
+            print(f"⚠️  Font not found: {font_path}")
+            # Try fallback fonts
+            fallback_fonts = []
+            if system == 'Darwin':
+                fallback_fonts = [
+                    '/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
+                    '/System/Library/Fonts/Helvetica.ttc',
+                ]
+            elif system == 'Linux':
+                fallback_fonts = [
+                    '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+                    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+                ]
+
+            for fallback in fallback_fonts:
+                if os.path.exists(fallback):
+                    print(f"✅ Using fallback font: {fallback}")
+                    return fallback
+
+            print(f"⚠️  Using default font path: {font_path} (may not exist)")
+
+        return font_path
 
     def _get_zoom_effect(self, effect_type: str, total_frames: int,
                         width: int, height: int, fps: int) -> str:
@@ -249,7 +379,7 @@ class VideoGenerator:
 
     def _create_scene_video(self, scene: Dict, index: int,
                            width: int, height: int, fps: int,
-                           transition_duration: float, effect_type: str = 'ken_burns') -> str:
+                           transition_duration: float, effect_type: str = 'ken_burns', enable_captions: bool = True) -> str:
         """Create video for a single scene with text overlay"""
         image_path = scene['image_path']
         audio_path = scene['audio_path']
@@ -261,10 +391,10 @@ class VideoGenerator:
         # Output path for this scene
         scene_output = os.path.join(self.temp_dir, f"scene_{index:03d}.mp4")
 
-        # Create complex filter for text animation and effects
+        # Create complex filter for text animation and effects (only if captions enabled)
         text_filter = self._create_text_filter(
             caption, width, height, audio_duration, index
-        )
+        ) if enable_captions else ""
 
         # Calculate zoom parameters for smooth, dynamic motion
         total_frames = int(audio_duration * fps)
@@ -305,10 +435,10 @@ class VideoGenerator:
             '-map', '[v]',
             '-map', '1:a',
             '-c:v', 'libx264',
-            '-preset', 'medium',  # Balance of quality and speed
-            '-crf', '21',  # High quality
+            '-preset', 'fast',  # Faster encoding
+            '-crf', '25',  # Good quality but smaller file size
             '-c:a', 'aac',
-            '-b:a', '192k',
+            '-b:a', '128k',  # Reduced audio bitrate
             '-shortest',
             '-movflags', '+faststart',
             '-y',
@@ -329,6 +459,7 @@ class VideoGenerator:
                            duration: float, scene_index: int) -> str:
         """
         Create FFmpeg text overlay with live caption style (3-4 words at a time)
+        Supports multiple scripts including Malayalam, Hindi, Arabic, Chinese, Japanese, Korean
 
         Args:
             caption: Text to display (full voice over)
@@ -336,6 +467,10 @@ class VideoGenerator:
             duration: Scene duration in seconds
             scene_index: Scene number for color variation
         """
+        # Detect script and get appropriate font
+        script = self._detect_script(caption)
+        font_path = self._get_font_path(script)
+        print(f"   📝 Detected script: {script}, using font: {font_path}")
         # Determine aspect ratio orientation
         aspect = width / height
         is_vertical = aspect < 0.8  # 9:16, 3:4
@@ -390,10 +525,10 @@ class VideoGenerator:
             start_time = i * time_per_chunk
             end_time = (i + 1) * time_per_chunk
 
-            # Create filter for this chunk
+            # Create filter for this chunk with proper font support
             text_filters.append(
                 f"drawtext="
-                f"fontfile=/System/Library/Fonts/Helvetica.ttc:"
+                f"fontfile={font_path}:"
                 f"fontsize={font_size}:"
                 f"fontcolor=white:"
                 f"borderw=3:"
@@ -517,10 +652,10 @@ class VideoGenerator:
             '-map', '[vout]',
             '-map', '[aout]',
             '-c:v', 'libx264',
-            '-preset', 'medium',
-            '-crf', '21',
+            '-preset', 'fast',  # Faster encoding
+            '-crf', '25',  # Good quality but smaller file size
             '-c:a', 'aac',
-            '-b:a', '192k',
+            '-b:a', '128k',  # Reduced audio bitrate
             '-movflags', '+faststart',
             '-y',
             str(output_path)
@@ -535,7 +670,17 @@ class VideoGenerator:
             print(f"❌ Error creating transitions:")
             print(f"   Filter: {filter_complex}")
             print(f"   Error: {result.stderr}")
-            raise RuntimeError("Failed to create video with transitions")
+
+            # Check if it's a disk space issue
+            if "No space left on device" in result.stderr or "No space left" in result.stderr:
+                self._check_disk_space(required_gb=3.0)
+                raise RuntimeError(
+                    "Ran out of disk space during video generation!\n"
+                    "Please free up at least 3-5 GB of space and try again.\n"
+                    "The video encoding process needs temporary space."
+                )
+
+            raise RuntimeError(f"Failed to create video with transitions: {result.stderr[-500:]}")
 
     def _concatenate_videos(self, concat_file: str, output_path: Path, fps: int):
         """Concatenate all scene videos into final output (simple method without transitions)"""

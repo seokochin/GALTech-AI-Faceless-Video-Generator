@@ -21,6 +21,7 @@ interface VideoGenerationError {
  * @param transitionDuration Duration of transitions in seconds
  * @param fps Frames per second
  * @param filename Output filename
+ * @param enableCaptions Whether to display captions on video
  * @returns Promise with video URL
  */
 export const generateVideoWithFFmpeg = async (
@@ -28,7 +29,8 @@ export const generateVideoWithFFmpeg = async (
   aspectRatio: AspectRatio,
   transitionDuration: number = 0.5,
   fps: number = 30,
-  filename: string = 'ai-video.mp4'
+  filename: string = 'ai-video.mp4',
+  enableCaptions: boolean = true
 ): Promise<string> => {
   try {
     const response = await fetch(`${API_BASE_URL}/generate-video`, {
@@ -48,6 +50,7 @@ export const generateVideoWithFFmpeg = async (
         transitionDuration,
         fps,
         filename,
+        enableCaptions,
       }),
     });
 

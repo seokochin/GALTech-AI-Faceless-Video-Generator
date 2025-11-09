@@ -173,7 +173,8 @@ def generate_video():
         "aspectRatio": "16:9",
         "transitionDuration": 0.5,
         "fps": 30,
-        "filename": "my_video.mp4"
+        "filename": "my_video.mp4",
+        "enableCaptions": true
     }
 
     Returns:
@@ -186,11 +187,13 @@ def generate_video():
         transition_duration = data.get('transitionDuration', 0.5)
         fps = data.get('fps', 30)
         filename = data.get('filename', f'video_{uuid.uuid4()}.mp4')
+        enable_captions = data.get('enableCaptions', True)  # Default to True for backward compatibility
 
         if not scenes_data:
             return jsonify({"error": "No scenes provided"}), 400
 
         print(f"📥 Received request to generate video with {len(scenes_data)} scenes")
+        print(f"   Captions enabled: {enable_captions}")
 
         # Process each scene and save files
         processed_scenes = []
@@ -225,7 +228,8 @@ def generate_video():
             output_filename=filename,
             aspect_ratio=aspect_ratio,
             transition_duration=transition_duration,
-            fps=fps
+            fps=fps,
+            enable_captions=enable_captions
         )
 
         # Cleanup temp files
@@ -235,6 +239,25 @@ def generate_video():
                 os.remove(temp_file)
             except:
                 pass
+
+        # Auto-cleanup old generated videos (older than 1 hour to prevent disk full)
+        print("🧹 Auto-cleaning old generated videos...")
+        import time
+        current_time = time.time()
+        cleaned_count = 0
+        for old_file in OUTPUT_FOLDER.glob('*.mp4'):
+            try:
+                file_age = current_time - os.path.getmtime(old_file)
+                # Keep only the current video and recent ones (1 hour)
+                if file_age > 3600 and str(old_file) != str(output_path):  # 1 hour
+                    os.remove(old_file)
+                    cleaned_count += 1
+            except Exception as e:
+                print(f"⚠️  Could not remove {old_file}: {e}")
+                pass
+
+        if cleaned_count > 0:
+            print(f"✅ Removed {cleaned_count} old video(s) to free up space")
 
         # Return video URL
         video_url = f"/api/download/{os.path.basename(output_path)}"
@@ -310,6 +333,35 @@ def cleanup_files():
         return jsonify({"error": str(e)}), 500
 
 
+def startup_cleanup():
+    """Clean up old files on server startup to prevent disk space issues"""
+    import time
+    print("\n🧹 Performing startup cleanup...")
+
+    # Clean all temp uploads
+    temp_count = 0
+    for file in UPLOAD_FOLDER.glob('*'):
+        try:
+            os.remove(file)
+            temp_count += 1
+        except:
+            pass
+
+    # Clean old generated videos (older than 1 hour)
+    current_time = time.time()
+    video_count = 0
+    for file in OUTPUT_FOLDER.glob('*.mp4'):
+        try:
+            file_age = current_time - os.path.getmtime(file)
+            if file_age > 3600:  # 1 hour
+                os.remove(file)
+                video_count += 1
+        except:
+            pass
+
+    print(f"✅ Startup cleanup: Removed {temp_count} temp files and {video_count} old videos")
+
+
 if __name__ == '__main__':
     print("""
     🎬 AI Video Weaver API Server
@@ -324,5 +376,8 @@ if __name__ == '__main__':
 
     Make sure FFmpeg is installed!
     """)
+
+    # Run startup cleanup
+    startup_cleanup()
 
     app.run(debug=True, host='0.0.0.0', port=5001)

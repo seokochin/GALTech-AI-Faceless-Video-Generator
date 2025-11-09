@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import SparklesIcon from './icons/SparklesIcon';
+import { VoiceName, VoiceOption } from '../types';
 
 interface TopicInputProps {
-  onGenerate: (topic: string, duration: number) => void;
+  onGenerate: (topic: string, duration: number, voice: VoiceName) => void;
   isLoading: boolean;
 }
 
@@ -21,15 +22,29 @@ const durationOptions: DurationOption[] = [
   { label: 'Long', value: 'long', minutes: 5, description: '~5 min (17-18 scenes)' },
 ];
 
+const voiceOptions: VoiceOption[] = [
+  // Female voices
+  { name: "Aoede", gender: "Female", description: "Breezy and natural" },
+  { name: "Kore", gender: "Female", description: "Firm and confident" },
+  { name: "Leda", gender: "Female", description: "Youthful and energetic" },
+  { name: "Zephyr", gender: "Female", description: "Bright and cheerful" },
+  // Male voices
+  { name: "Puck", gender: "Male", description: "Upbeat and energetic" },
+  { name: "Charon", gender: "Male", description: "Informative and clear" },
+  { name: "Fenrir", gender: "Male", description: "Excitable and dynamic" },
+  { name: "Orus", gender: "Male", description: "Deep and resonant" },
+];
+
 const TopicInput: React.FC<TopicInputProps> = ({ onGenerate, isLoading }) => {
   const [topic, setTopic] = useState('');
   const [durationType, setDurationType] = useState<VideoDurationType>('shorts');
+  const [selectedVoice, setSelectedVoice] = useState<VoiceName>('Kore');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (topic.trim() && !isLoading) {
       const selectedOption = durationOptions.find(opt => opt.value === durationType);
-      onGenerate(topic, selectedOption?.minutes || 1);
+      onGenerate(topic, selectedOption?.minutes || 1, selectedVoice);
     }
   };
 
@@ -78,6 +93,75 @@ const TopicInput: React.FC<TopicInputProps> = ({ onGenerate, isLoading }) => {
                   <p className="text-sm text-gray-400">{option.description}</p>
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="w-full">
+            <label className="text-gray-300 font-medium mb-3 block">Voice Narrator:</label>
+            <div className="grid grid-cols-1 gap-3">
+              {/* Female Voices */}
+              <div>
+                <p className="text-sm text-gray-400 mb-2 font-semibold">Female Voices</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {voiceOptions.filter(v => v.gender === "Female").map((voice) => (
+                    <button
+                      key={voice.name}
+                      type="button"
+                      onClick={() => setSelectedVoice(voice.name)}
+                      disabled={isLoading}
+                      className={`relative p-3 rounded-lg border-2 transition-all duration-200 text-left ${
+                        selectedVoice === voice.name
+                          ? 'border-pink-500 bg-pink-600/20 shadow-lg shadow-pink-500/20'
+                          : 'border-gray-700 bg-gray-800 hover:border-gray-600 hover:bg-gray-750'
+                      } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-sm text-white">{voice.name}</span>
+                        {selectedVoice === voice.name && (
+                          <div className="w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center">
+                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400">{voice.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Male Voices */}
+              <div>
+                <p className="text-sm text-gray-400 mb-2 font-semibold">Male Voices</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {voiceOptions.filter(v => v.gender === "Male").map((voice) => (
+                    <button
+                      key={voice.name}
+                      type="button"
+                      onClick={() => setSelectedVoice(voice.name)}
+                      disabled={isLoading}
+                      className={`relative p-3 rounded-lg border-2 transition-all duration-200 text-left ${
+                        selectedVoice === voice.name
+                          ? 'border-blue-500 bg-blue-600/20 shadow-lg shadow-blue-500/20'
+                          : 'border-gray-700 bg-gray-800 hover:border-gray-600 hover:bg-gray-750'
+                      } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-sm text-white">{voice.name}</span>
+                        {selectedVoice === voice.name && (
+                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400">{voice.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>

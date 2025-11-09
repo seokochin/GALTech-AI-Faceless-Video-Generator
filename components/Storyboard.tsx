@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Scene, AspectRatio, GroundingChunk } from '../types';
+import { Scene, AspectRatio, GroundingChunk, VoiceName } from '../types';
 import SceneCard from './SceneCard';
 import { generateImage, generateSpeech } from '../services/geminiService';
 import { decode, createWavBlob } from '../utils/audioUtils';
@@ -8,13 +8,15 @@ import { generateVideoWithFFmpeg, downloadVideoFile, checkApiHealth } from '../s
 interface StoryboardProps {
   scenes: Scene[];
   updateScene: (sceneId: number, updatedScene: Partial<Scene>) => void;
+  deleteScene: (sceneId: number) => void;
   onReset: () => void;
   groundingSources: GroundingChunk[];
+  selectedVoice: VoiceName;
 }
 
 const imageStyles = ['Default', 'Photorealistic', 'Cinematic', 'Cartoon', 'Anime', 'Fantasy Art', 'Watercolor', 'Cyberpunk'];
 
-const Storyboard: React.FC<StoryboardProps> = ({ scenes, updateScene, onReset, groundingSources }) => {
+const Storyboard: React.FC<StoryboardProps> = ({ scenes, updateScene, deleteScene, onReset, groundingSources, selectedVoice }) => {
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
   const [imageStyle, setImageStyle] = useState<string>('Default');
   const [isRendering, setIsRendering] = useState(false);
@@ -23,6 +25,7 @@ const Storyboard: React.FC<StoryboardProps> = ({ scenes, updateScene, onReset, g
   const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0, type: '' });
   const [ffmpegAvailable, setFfmpegAvailable] = useState(false);
   const [currentGeneratingScene, setCurrentGeneratingScene] = useState<{ sceneId: number, type: 'image' | 'audio' } | null>(null);
+  const [enableCaptions, setEnableCaptions] = useState(true);
 
   const allAssetsGenerated = scenes.every(s => s.imageUrl && s.audioUrl);
 
@@ -71,7 +74,7 @@ const Storyboard: React.FC<StoryboardProps> = ({ scenes, updateScene, onReset, g
           setCurrentGeneratingScene({ sceneId: scene.id, type: 'audio' });
           setGenerationProgress({ current: completed, total: totalAssets, type: `Generating audio for Scene ${scene.id}...` });
           try {
-            const base64Audio = await generateSpeech(scene.voiceOver);
+            const base64Audio = await generateSpeech(scene.voiceOver, selectedVoice);
             const audioBytes = decode(base64Audio);
             const blob = createWavBlob(audioBytes, 24000);
             const audioUrl = URL.createObjectURL(blob);
@@ -128,7 +131,8 @@ const Storyboard: React.FC<StoryboardProps> = ({ scenes, updateScene, onReset, g
         aspectRatio,
         0.5, // transition duration
         30,  // fps
-        `ai-video-${Date.now()}.mp4`
+        `ai-video-${Date.now()}.mp4`,
+        enableCaptions
       );
 
       setRenderProgress(90);
@@ -178,6 +182,16 @@ const Storyboard: React.FC<StoryboardProps> = ({ scenes, updateScene, onReset, g
               {imageStyles.map(style => <option key={style} value={style}>{style}</option>)}
             </select>
           </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="enableCaptions" className="text-sm font-medium text-gray-300">Captions:</label>
+            <input
+              type="checkbox"
+              id="enableCaptions"
+              checked={enableCaptions}
+              onChange={(e) => setEnableCaptions(e.target.checked)}
+              className="w-4 h-4 text-indigo-600 bg-gray-700 border-gray-600 rounded focus:ring-indigo-500 focus:ring-2"
+            />
+          </div>
           <button onClick={onReset} className="text-gray-400 hover:text-white transition">New Story</button>
         </div>
       </div>
@@ -188,10 +202,13 @@ const Storyboard: React.FC<StoryboardProps> = ({ scenes, updateScene, onReset, g
             key={scene.id}
             scene={scene}
             updateScene={updateScene}
+            deleteScene={deleteScene}
             aspectRatio={aspectRatio}
             imageStyle={imageStyle}
+            selectedVoice={selectedVoice}
             isGeneratingImage={currentGeneratingScene?.sceneId === scene.id && currentGeneratingScene?.type === 'image'}
             isGeneratingAudio={currentGeneratingScene?.sceneId === scene.id && currentGeneratingScene?.type === 'audio'}
+            canDelete={scenes.length > 1}
           />
         ))}
       </div>

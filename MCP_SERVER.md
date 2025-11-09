@@ -207,7 +207,7 @@ Here's a complete example configuration for Claude Desktop:
         "/Users/yourname/Downloads/ai-video-weaver/mcp_server.py"
       ],
       "env": {
-        "GEMINI_API_KEY": "AIzaSyB9GKryqS58KBz2lP0yv-rMBR68UuI3rzw"
+        "GEMINI_API_KEY": "XXXXXX"
       }
     }
   }

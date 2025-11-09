@@ -36,7 +36,7 @@ Your config file already has:
       "command": "python3",
       "args": ["/Users/mohammedsalih/Downloads/ai-video-weaver/mcp_server.py"],
       "env": {
-        "GEMINI_API_KEY": "AIzaSyB9GKryqS58KBz2lP0yv-rMBR68UuI3rzw"
+        "GEMINI_API_KEY": "XXXXXXX"
       }
     }
   }

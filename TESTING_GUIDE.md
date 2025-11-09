@@ -181,7 +181,7 @@ cat .env.local
 
 Should show:
 ```
-GEMINI_API_KEY=AIzaSyB9GKryqS58KBz2lP0yv-rMBR68UuI3rzw
+GEMINI_API_KEY=XXXXXXXX
 ```
 
 ---
